@@ -16,6 +16,9 @@ const dirname = path.dirname(filename)
 export default buildConfig({
   admin: {
     user: 'users',
+    avatar: {
+      Component: '/components/BetterAuthAvatar#BetterAuthAvatar',
+    },
     components: {
       graphics: {
         Logo: '/components/Logo#Logo',

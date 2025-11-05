@@ -124,6 +124,10 @@ export interface User {
   betterAuthUserId?: string | null;
   email: string;
   name?: string | null;
+  /**
+   * User profile image URL
+   */
+  image?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -228,6 +232,7 @@ export interface UsersSelect<T extends boolean = true> {
   betterAuthUserId?: T;
   email?: T;
   name?: T;
+  image?: T;
   updatedAt?: T;
   createdAt?: T;
 }

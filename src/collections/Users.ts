@@ -2,6 +2,13 @@ import { auth } from '@/auth'
 import type { User } from '@/payload-types'
 import type { CollectionConfig } from 'payload'
 
+interface BetterAuthUser {
+  email?: string | null
+  id: string
+  name?: string | null
+  image?: string | null
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
@@ -59,11 +66,7 @@ export const Users: CollectionConfig = {
           }
 
           const session = sessionData as null | {
-            user?: {
-              email?: string | null
-              id: string
-              name?: string | null
-            }
+            user?: BetterAuthUser
           }
 
           if (!session?.user) {
@@ -97,10 +100,11 @@ export const Users: CollectionConfig = {
             })
 
             payloadUser = docs[0]
-            const baseUserData: Pick<User, 'betterAuthUserId' | 'email' | 'name'> = {
+            const baseUserData: Pick<User, 'betterAuthUserId' | 'email' | 'name' | 'image'> = {
               betterAuthUserId: betterAuthUser.id,
               email: betterAuthUser.email,
               name: betterAuthUser.name,
+              image: betterAuthUser.image,
             }
 
             if (!payloadUser) {
@@ -123,6 +127,10 @@ export const Users: CollectionConfig = {
 
               if (payloadUser.betterAuthUserId !== baseUserData.betterAuthUserId) {
                 updates.betterAuthUserId = baseUserData.betterAuthUserId
+              }
+
+              if (baseUserData.image && payloadUser.image !== baseUserData.image) {
+                updates.image = baseUserData.image
               }
 
               if (Object.keys(updates).length > 0) {
@@ -180,8 +188,8 @@ export const Users: CollectionConfig = {
       // required: true,
       unique: true,
       admin: {
-        position: 'sidebar',
         readOnly: true,
+        hidden: true,
       },
     },
     {
@@ -196,6 +204,17 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
+      name: 'image',
+      type: 'text',
+      admin: {
+        description: 'User profile image URL',
+        readOnly: true,
+      },
     },
   ],
 }

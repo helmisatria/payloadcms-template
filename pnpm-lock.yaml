@@ -11,6 +11,9 @@ importers:
       '@daveyplate/better-auth-ui':
         specifier: ^3.2.8
         version: 3.2.8(15a530fbe10aac899e7295b5c6ef8813)
+      '@eslint/eslintrc':
+        specifier: ^3.3.1
+        version: 3.3.1
       '@payloadcms/db-mongodb':
         specifier: 3.62.1
         version: 3.62.1(@aws-sdk/credential-providers@3.922.0)(payload@3.62.1(graphql@16.12.0)(typescript@5.9.3))

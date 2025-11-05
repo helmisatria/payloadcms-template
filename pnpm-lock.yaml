@@ -118,8 +118,8 @@ importers:
         specifier: 1.54.1
         version: 1.54.1
       playwright-core:
-        specifier: 1.54.1
-        version: 1.54.1
+        specifier: 1.56.1
+        version: 1.56.1
       prettier:
         specifier: ^3.4.2
         version: 3.6.2
@@ -4488,6 +4488,11 @@ packages:
 
   playwright-core@1.54.1:
     resolution: {integrity: sha512-Nbjs2zjj0htNhzgiy5wu+3w09YetDx5pkrpI/kZotDlDUaYk0HVA5xrBVPdow4SAUIlhgKcJeJg4GRKW6xHusA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright-core@1.56.1:
+    resolution: {integrity: sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -10705,6 +10710,8 @@ snapshots:
       thread-stream: 3.1.0
 
   playwright-core@1.54.1: {}
+
+  playwright-core@1.56.1: {}
 
   playwright@1.54.1:
     dependencies:

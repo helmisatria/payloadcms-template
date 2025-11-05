@@ -24,6 +24,15 @@ export const auth = betterAuth({
       updateUserInfoOnLink: true,
     },
   },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day (refresh session expiration daily)
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // Cache session in cookie for 5 minutes
+      strategy: 'compact', // Use compact encoding for smallest cookie size
+    },
+  },
   databaseHooks: {
     user: {
       create: {
@@ -53,5 +62,6 @@ export const auth = betterAuth({
   database: mongodbAdapter(db, {
     // Optional: if you don't provide a client, database transactions won't be enabled.
     client,
+    debugLogs: process.env.NODE_ENV !== 'production',
   }),
 })

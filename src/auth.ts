@@ -21,7 +21,7 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        before: async (user, ctx) => {
+        before: async (user, _ctx) => {
           const payload = await getPayload({ config })
 
           const userExists = await payload.find({

@@ -17,6 +17,10 @@ export default buildConfig({
   admin: {
     user: 'users',
     components: {
+      graphics: {
+        Logo: '/components/Logo#Logo',
+        Icon: '/components/Logo#Logo',
+      },
       logout: {
         Button: '/components/BetterAuthLogout#BetterAuthLogoutButton',
       },

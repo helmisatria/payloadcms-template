@@ -180,8 +180,8 @@ export const Users: CollectionConfig = {
       // required: true,
       unique: true,
       admin: {
-        position: 'sidebar',
         readOnly: true,
+        hidden: true,
       },
     },
     {

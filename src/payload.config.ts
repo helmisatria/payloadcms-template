@@ -15,7 +15,12 @@ const dirname = path.dirname(filename)
 
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: 'users',
+    components: {
+      logout: {
+        Button: '/components/BetterAuthLogout#BetterAuthLogoutButton',
+      },
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },

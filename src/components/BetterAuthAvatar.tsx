@@ -2,12 +2,7 @@ import React from 'react'
 import config from '@/payload.config'
 import { getPayload } from 'payload'
 import { headers as getHeaders } from 'next/headers'
-
-interface BetterAuthAvatarProps {
-  user: {
-    image?: string
-  }
-}
+import { User } from 'lucide-react'
 
 export const BetterAuthAvatar = async () => {
   const headers = await getHeaders()
@@ -20,7 +15,11 @@ export const BetterAuthAvatar = async () => {
   }
 
   if (!user.image) {
-    return <div>No avatar available</div>
+    return (
+      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+        <User size={20} className="text-gray-500" />
+      </div>
+    )
   }
 
   return (

@@ -10,6 +10,7 @@ import { inMemoryKVAdapter } from 'payload'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { seed } from './seeds'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -48,4 +49,7 @@ export default buildConfig({
     payloadCloudPlugin(),
     // storage-adapter-placeholder
   ],
+  onInit: async (payload) => {
+    await seed(payload)
+  },
 })

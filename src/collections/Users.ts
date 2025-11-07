@@ -197,9 +197,6 @@ export const Users: CollectionConfig = {
       type: 'email',
       required: true,
       unique: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: 'name',
@@ -214,6 +211,28 @@ export const Users: CollectionConfig = {
       admin: {
         description: 'User profile image URL',
         readOnly: true,
+      },
+    },
+    {
+      name: 'role',
+      type: 'select',
+      defaultValue: 'viewer',
+      options: [
+        {
+          label: 'Admin',
+          value: 'admin',
+        },
+        {
+          label: 'Content Admin',
+          value: 'content-admin',
+        },
+        {
+          label: 'Viewer',
+          value: 'viewer',
+        },
+      ],
+      admin: {
+        description: 'User role for access control',
       },
     },
   ],

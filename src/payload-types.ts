@@ -126,6 +126,10 @@ export interface User {
    * User profile image URL
    */
   image?: string | null;
+  /**
+   * User role for access control
+   */
+  role?: ('admin' | 'content-admin' | 'viewer') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -214,6 +218,7 @@ export interface UsersSelect<T extends boolean = true> {
   email?: T;
   name?: T;
   image?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
 }

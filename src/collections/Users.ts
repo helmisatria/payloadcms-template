@@ -1,3 +1,4 @@
+import { hasRole } from '@/access'
 import { auth } from '@/auth'
 import type { User } from '@/payload-types'
 import type { CollectionConfig } from 'payload'
@@ -14,6 +15,12 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['email', 'name', 'updatedAt'],
+  },
+  access: {
+    read: ({ req }) => hasRole(req.user, 'admin'),
+    create: ({ req }) => hasRole(req.user, 'admin'),
+    update: ({ req }) => hasRole(req.user, 'admin'),
+    delete: ({ req }) => hasRole(req.user, 'admin'),
   },
   auth: {
     disableLocalStrategy: true,

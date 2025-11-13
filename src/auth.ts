@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb'
 import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { getPayload } from 'payload'
 import config from '@payload-config'
+import { admin } from 'better-auth/plugins/admin'
 
 const client = new MongoClient(process.env.DATABASE_URI || '')
 const db = client.db()
@@ -33,6 +34,7 @@ export const auth = betterAuth({
       strategy: 'compact', // Use compact encoding for smallest cookie size
     },
   },
+  plugins: [admin()],
   databaseHooks: {
     user: {
       create: {

@@ -8,7 +8,7 @@ const DEFAULT_CONTENT = {
 }
 
 const resolveParam = (value: string | string[] | undefined) =>
-  Array.isArray(value) ? value[0] : value ?? ''
+  Array.isArray(value) ? value[0] : (value ?? '')
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>

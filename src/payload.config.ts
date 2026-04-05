@@ -11,15 +11,9 @@ import { inMemoryKVAdapter } from 'payload'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
-import { seed } from './seeds'
-import { setIsSeedingUsers } from './seeds/state'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-
-function shouldRunSeedOnInit(): boolean {
-  return process.env.PAYLOAD_SKIP_SEED !== 'true'
-}
 
 export default buildConfig({
   kv: inMemoryKVAdapter(),
@@ -65,17 +59,4 @@ export default buildConfig({
     payloadCloudPlugin(),
     // storage-adapter-placeholder
   ],
-  onInit: async (payload) => {
-    if (!shouldRunSeedOnInit()) {
-      return
-    }
-
-    setIsSeedingUsers(true)
-
-    try {
-      await seed(payload)
-    } finally {
-      setIsSeedingUsers(false)
-    }
-  },
 })

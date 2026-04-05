@@ -42,14 +42,19 @@ A starter template combining [Payload CMS](https://payloadcms.com), [PostgreSQL]
    docker compose up -d
    ```
 
-4. Run migrations and start the dev server:
+4. Set up the database:
 
    ```bash
-   pnpm db:migrate
+   pnpm db:setup
+   ```
+
+5. Start the dev server:
+
+   ```bash
    pnpm dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000)
+6. Open [http://localhost:3000](http://localhost:3000)
 
 ## Project Structure
 
@@ -78,16 +83,29 @@ src/
 
 ## Scripts
 
-| Script                   | Description                     |
-| ------------------------ | ------------------------------- |
-| `pnpm dev`               | Start dev server with Turbopack |
-| `pnpm build`             | Production build                |
-| `pnpm start`             | Start production server         |
-| `pnpm db:migrate`        | Run database migrations         |
-| `pnpm db:migrate:create` | Create a new migration          |
-| `pnpm test`              | Run integration + e2e tests     |
-| `pnpm lint`              | Lint with oxlint                |
-| `pnpm format`            | Format with oxfmt               |
+| Script                   | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `pnpm dev`               | Start dev server with Turbopack          |
+| `pnpm build`             | Production build                         |
+| `pnpm start`             | Start production server                  |
+| `pnpm db:setup`          | Run database migrations and seed data    |
+| `pnpm db:migrate`        | Run Payload database migrations          |
+| `pnpm db:migrate:create` | Create a new Payload migration           |
+| `pnpm db:migrate:fresh`  | Drop the database and run all migrations |
+| `pnpm db:migrate:status` | Show migration status                    |
+| `pnpm db:seed`           | Run seed data directly                   |
+| `pnpm test`              | Run integration + e2e tests              |
+| `pnpm lint`              | Lint with oxlint                         |
+| `pnpm format`            | Format with oxfmt                        |
+
+## Schema Changes
+
+When you modify Payload collections, generate a new migration and re-run:
+
+```bash
+pnpm db:migrate:create
+pnpm db:migrate
+```
 
 ## License
 

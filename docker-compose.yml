@@ -1,16 +1,17 @@
 services:
-  mongo:
-    image: mongo:latest
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-payload_custom_auth}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
+      - '5432:5432'
     volumes:
-      - data:/data/db
+      - pgdata:/var/lib/postgresql/data
     logging:
       driver: json-file
 
 volumes:
-  data:
-  # pgdata:
+  pgdata:
   node_modules:

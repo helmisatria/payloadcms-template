@@ -1,5 +1,5 @@
 // storage-adapter-import-placeholder
-import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
@@ -15,6 +15,10 @@ import { setIsSeedingUsers } from './seeds/state'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+function shouldRunSeedOnInit(): boolean {
+  return process.env.PAYLOAD_SKIP_SEED !== 'true'
+}
 
 export default buildConfig({
   kv: inMemoryKVAdapter(),
@@ -42,8 +46,13 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: mongooseAdapter({
-    url: process.env.DATABASE_URI || '',
+  db: postgresAdapter({
+    blocksAsJSON: true,
+    pool: {
+      connectionString: process.env.DATABASE_URL || '',
+    },
+    push: false,
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   sharp,
   plugins: [
@@ -51,6 +60,10 @@ export default buildConfig({
     // storage-adapter-placeholder
   ],
   onInit: async (payload) => {
+    if (!shouldRunSeedOnInit()) {
+      return
+    }
+
     setIsSeedingUsers(true)
 
     try {

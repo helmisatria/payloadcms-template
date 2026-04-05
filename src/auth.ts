@@ -1,13 +1,9 @@
 import { APIError, betterAuth } from 'better-auth'
-import { MongoClient } from 'mongodb'
-import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { admin } from 'better-auth/plugins/admin'
+import { postgresPool } from './db/postgres'
 import { getIsSeedingUsers } from './seeds/state'
-
-const client = new MongoClient(process.env.DATABASE_URI || '')
-const db = client.db()
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL!,
@@ -66,11 +62,5 @@ export const auth = betterAuth({
       },
     },
   },
-  database: mongodbAdapter(db, {
-    client,
-    // Local Docker uses standalone MongoDB, so transactions are not available.
-    // Keep the shared client, but disable transactional writes explicitly.
-    transaction: false,
-    debugLogs: process.env.NODE_ENV !== 'production',
-  }),
+  database: postgresPool,
 })

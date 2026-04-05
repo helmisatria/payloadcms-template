@@ -20,6 +20,7 @@
     "auth:migrate": "pnpm dlx auth@latest migrate",
     "payload": "payload",
     "prepare": "husky",
+    "typecheck": "tsc --noEmit",
     "start": "next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=--no-experimental-strip-types pnpm exec playwright test",

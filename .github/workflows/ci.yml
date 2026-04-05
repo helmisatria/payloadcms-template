@@ -10,8 +10,8 @@ jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgres://localhost:5432/test
-      PAYLOAD_SECRET: a]dummysecretforcibuildsonly1234567890
+      USE_SQLITE: true
+      PAYLOAD_SECRET: dummysecretforcibuildsonly1234567890
       NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3000
       BETTER_AUTH_SECRET: dummysecretforcibuildsonly1234567890ab
       GOOGLE_CLIENT_ID: dummy

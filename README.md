@@ -1,67 +1,112 @@
-# Payload Blank Template
+# Payload CMS + PostgreSQL + Better Auth
 
-This template comes configured with the bare minimum to get started on anything you need.
+A starter template combining [Payload CMS](https://payloadcms.com), [PostgreSQL](https://www.postgresql.org), and [Better Auth](https://www.better-auth.com) for a modern, full-featured content management setup with robust authentication.
 
-## Quick start
+## Features
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+- **Payload CMS** -- headless CMS with admin panel, rich text editing, and media management
+- **PostgreSQL** -- production-ready relational database via `@payloadcms/db-postgres`
+- **Better Auth** -- authentication layer with email/password and social login (Google)
+- **RBAC** -- role-based access control with Admin, Content Admin, and Viewer roles
+- **Session management** -- 7-day sessions with daily refresh and cookie caching
+- **Account linking** -- link multiple auth providers to a single user
+- **Restricted registration** -- only pre-existing Payload users can register via Better Auth
+- **Middleware protection** -- route-level auth guards for `/admin`, `/account`, and `/organization`
+- **Next.js 16** -- App Router with Turbopack
 
-## Quick Start - local setup
+## Quick Start
 
-To spin up this template locally, follow these steps:
+### Prerequisites
 
-### Clone
+- Node.js >= 24.9.0
+- pnpm >= 10
+- PostgreSQL 17+ (or Docker)
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+### Setup
 
-### Development
+1. Clone the repo and install dependencies:
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URI` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+   ```bash
+   pnpm install
+   ```
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+2. Copy the environment file and fill in your values:
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+   ```bash
+   cp .env.example .env
+   ```
 
-#### Docker (Optional)
+3. Start PostgreSQL (if using Docker):
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+   ```bash
+   docker compose up -d
+   ```
 
-To do so, follow these steps:
+4. Set up the database:
 
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+   ```bash
+   pnpm db:setup
+   ```
 
-## How it works
+5. Start the dev server:
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+   ```bash
+   pnpm dev
+   ```
 
-### Collections
+6. Open [http://localhost:3000](http://localhost:3000)
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+## Project Structure
 
-- #### Users (Authentication)
+```
+src/
+  auth.ts              # Better Auth configuration (plugins, providers, hooks)
+  access.ts            # RBAC helper (hasRole)
+  proxy.ts             # Middleware for route protection
+  collections/
+    Users.ts           # User collection with Better Auth strategy + RBAC fields
+    Media.ts           # Upload-enabled media collection
+  lib/
+    auth-client.ts     # Better Auth React client
+    utils.ts           # Shared utilities
+  db/
+    postgres.ts        # PostgreSQL connection pool
+  seeds/               # Database seed scripts
+```
 
-  Users are auth-enabled collections that have access to the admin panel.
+## Authentication Flow
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+1. Better Auth handles sign-in/sign-up (email/password or Google OAuth)
+2. On session resolution, the custom Payload auth strategy syncs the Better Auth user to the Payload `users` collection
+3. Payload admin panel access is controlled by the `role` field on the user (RBAC)
+4. Registration is restricted -- users must be pre-created in Payload before they can sign up via Better Auth
 
-- #### Media
+## Scripts
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+| Script                   | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `pnpm dev`               | Start dev server with Turbopack          |
+| `pnpm build`             | Production build                         |
+| `pnpm start`             | Start production server                  |
+| `pnpm db:setup`          | Run database migrations and seed data    |
+| `pnpm db:migrate`        | Run Payload database migrations          |
+| `pnpm db:migrate:create` | Create a new Payload migration           |
+| `pnpm db:migrate:fresh`  | Drop the database and run all migrations |
+| `pnpm db:migrate:status` | Show migration status                    |
+| `pnpm db:seed`           | Run seed data directly                   |
+| `pnpm test`              | Run integration + e2e tests              |
+| `pnpm lint`              | Lint with oxlint                         |
+| `pnpm format`            | Format with oxfmt                        |
 
-### Docker
+## Schema Changes
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+When you modify Payload collections, generate a new migration and re-run:
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+```bash
+pnpm db:migrate:create
+pnpm db:migrate
+```
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+## License
 
-## Questions
-
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+MIT

@@ -1,17 +1,20 @@
 import { APIError, betterAuth } from 'better-auth'
-import { MongoClient } from 'mongodb'
-import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { admin } from 'better-auth/plugins/admin'
+import { BA_TABLES } from './db/better-auth-tables'
+import { postgresPool } from './db/postgres'
 import { getIsSeedingUsers } from './seeds/state'
-
-const client = new MongoClient(process.env.DATABASE_URI || '')
-const db = client.db()
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL!,
   secret: process.env.BETTER_AUTH_SECRET!,
+  user: {
+    modelName: BA_TABLES.user,
+  },
+  verification: {
+    modelName: BA_TABLES.verification,
+  },
   emailAndPassword: {
     enabled: true,
   },
@@ -22,11 +25,13 @@ export const auth = betterAuth({
     },
   },
   account: {
+    modelName: BA_TABLES.account,
     accountLinking: {
       updateUserInfoOnLink: true,
     },
   },
   session: {
+    modelName: BA_TABLES.session,
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day (refresh session expiration daily)
     cookieCache: {
@@ -60,17 +65,10 @@ export const auth = betterAuth({
             })
           }
 
-          // Custom logic before creating a user
           return { data: user }
         },
       },
     },
   },
-  database: mongodbAdapter(db, {
-    client,
-    // Local Docker uses standalone MongoDB, so transactions are not available.
-    // Keep the shared client, but disable transactional writes explicitly.
-    transaction: false,
-    debugLogs: process.env.NODE_ENV !== 'production',
-  }),
+  database: postgresPool,
 })

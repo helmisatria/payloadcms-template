@@ -11,6 +11,7 @@ import { inMemoryKVAdapter } from 'payload'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { seed } from './seeds'
+import { setIsSeedingUsers } from './seeds/state'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -50,6 +51,12 @@ export default buildConfig({
     // storage-adapter-placeholder
   ],
   onInit: async (payload) => {
-    await seed(payload)
+    setIsSeedingUsers(true)
+
+    try {
+      await seed(payload)
+    } finally {
+      setIsSeedingUsers(false)
+    }
   },
 })

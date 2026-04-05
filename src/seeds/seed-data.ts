@@ -15,21 +15,21 @@ export type UserSeed = {
  */
 export const USER_SEED_DATA: UserSeed[] = [
   {
-    email: 'admin@mimika.go.id',
-    password: 'Admin@Mimika2025!',
-    name: 'Admin Bapenda Mimika',
+    email: 'admin@example.com',
+    password: 'admin123',
+    name: 'System Administrator',
     role: 'admin',
   },
   {
-    email: 'content@mimika.go.id',
-    password: 'Content@Mimika2025!',
-    name: 'Content Admin Bapenda Mimika',
+    email: 'content@example.com',
+    password: 'content123',
+    name: 'Content Administrator',
     role: 'content-admin',
   },
   {
-    email: 'viewer@mimika.go.id',
-    password: 'Viewer@Mimika2025!',
-    name: 'Viewer Bapenda Mimika',
+    email: 'viewer@example.com',
+    password: 'viewer123',
+    name: 'Viewer User',
     role: 'viewer',
   },
 ]

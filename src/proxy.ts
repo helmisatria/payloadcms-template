@@ -53,7 +53,7 @@ const buildRedirectUrl = (req: NextRequest) => {
   return signInUrl
 }
 
-const middleware = (req: NextRequest): Response | void => {
+const proxy = (req: NextRequest): Response | void => {
   const sessionCookie = getSessionCookie(req)
 
   // /admin/login
@@ -87,7 +87,7 @@ const middleware = (req: NextRequest): Response | void => {
   return NextResponse.next()
 }
 
-export default middleware
+export default proxy
 
 export const config = {
   matcher: ['/admin/:path*', '/account/:path*', '/organization/:path*', '/api/auth/error'],

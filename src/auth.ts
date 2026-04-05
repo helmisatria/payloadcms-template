@@ -4,6 +4,7 @@ import { mongodbAdapter } from 'better-auth/adapters/mongodb'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { admin } from 'better-auth/plugins/admin'
+import { getIsSeedingUsers } from './seeds/state'
 
 const client = new MongoClient(process.env.DATABASE_URI || '')
 const db = client.db()
@@ -39,6 +40,10 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user, _ctx) => {
+          if (getIsSeedingUsers()) {
+            return { data: user }
+          }
+
           const payload = await getPayload({ config })
 
           const userExists = await payload.find({
@@ -62,8 +67,10 @@ export const auth = betterAuth({
     },
   },
   database: mongodbAdapter(db, {
-    // Optional: if you don't provide a client, database transactions won't be enabled.
     client,
+    // Local Docker uses standalone MongoDB, so transactions are not available.
+    // Keep the shared client, but disable transactional writes explicitly.
+    transaction: false,
     debugLogs: process.env.NODE_ENV !== 'production',
   }),
 })

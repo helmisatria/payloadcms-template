@@ -1,68 +1,131 @@
 import type { Payload } from 'payload'
 import type { User } from '@/payload-types'
 import { auth } from '@/auth'
-import { USER_SEED_DATA } from './seed-data'
+import { USER_SEED_DATA, type UserSeed } from './seed-data'
 
-export const seedUsers = async (payload: Payload) => {
-  payload.logger.info('=d Seeding Users...')
+type SeedUsersResult = {
+  created: User[]
+  failed: string[]
+  existing: string[]
+}
+
+async function findPayloadUserByEmail(payload: Payload, email: string): Promise<null | User> {
+  const result = await payload.find({
+    collection: 'users',
+    limit: 1,
+    where: {
+      email: {
+        equals: email,
+      },
+    },
+  })
+
+  return result.docs[0] ?? null
+}
+
+async function createOrUpdatePayloadUser(payload: Payload, userData: UserSeed): Promise<User> {
+  const existingUser = await findPayloadUserByEmail(payload, userData.email)
+
+  if (!existingUser) {
+    const createdUser = await payload.create({
+      collection: 'users',
+      data: {
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+      },
+    })
+
+    payload.logger.info(`✅ Created Payload user: ${userData.email}`)
+    return createdUser
+  }
+
+  const needsUpdate = existingUser.name !== userData.name || existingUser.role !== userData.role
+
+  if (!needsUpdate) {
+    payload.logger.info(`ℹ️ Payload user is up to date: ${userData.email}`)
+    return existingUser
+  }
+
+  const updatedUser = await payload.update({
+    collection: 'users',
+    id: existingUser.id,
+    data: {
+      name: userData.name,
+      role: userData.role,
+    },
+  })
+
+  payload.logger.info(`♻️ Updated Payload user: ${userData.email}`)
+  return updatedUser
+}
+
+function isExistingUserError(message: string): boolean {
+  return message.includes('User already exists')
+}
+
+async function createBetterAuthUser(payload: Payload, userData: UserSeed): Promise<void> {
+  const result = await auth.api.signUpEmail({
+    body: {
+      email: userData.email,
+      password: userData.password,
+      name: userData.name,
+    },
+  })
+
+  if (result instanceof Response) {
+    const errorText = await result.text()
+
+    if (result.status === 422 && isExistingUserError(errorText)) {
+      payload.logger.info(`ℹ️ Better Auth user exists: ${userData.email}`)
+      return
+    }
+
+    throw new Error(`Better Auth signup failed with ${result.status}: ${errorText}`)
+  }
+
+  if (!result?.user?.id) {
+    throw new Error(`Better Auth signup did not return a user for ${userData.email}`)
+  }
+
+  payload.logger.info(`✅ Created Better Auth user: ${userData.email}`)
+}
+
+export const seedUsers = async (payload: Payload): Promise<SeedUsersResult> => {
+  payload.logger.info('👤 Seeding users...')
 
   const created: User[] = []
+  const existing: string[] = []
+  const failed: string[] = []
 
   for (const userData of USER_SEED_DATA) {
     try {
-      // Check if user already exists
-      const existing = await payload.find({
-        collection: 'users',
-        where: { email: { equals: userData.email } },
-      })
+      const payloadUserBeforeSeed = await findPayloadUserByEmail(payload, userData.email)
+      const payloadUser = await createOrUpdatePayloadUser(payload, userData)
 
-      if (existing.docs.length === 0) {
-        // Create user using Better Auth
-        await auth.api.signUpEmail({
-          body: {
-            email: userData.email,
-            password: userData.password,
-            name: userData.name,
-          },
-        })
+      await createBetterAuthUser(payload, userData)
 
-        // Wait a bit for the user to be synced to Payload
-        await new Promise((resolve) => setTimeout(resolve, 100))
+      created.push(payloadUser)
 
-        // Find the created user and update their role
-        const createdUsers = await payload.find({
-          collection: 'users',
-          where: { email: { equals: userData.email } },
-        })
-
-        if (createdUsers.docs.length > 0) {
-          const user = createdUsers.docs[0]
-          // Update with role
-          const updatedUser = await payload.update({
-            collection: 'users',
-            id: user.id,
-            data: {
-              role: userData.role,
-            },
-          })
-
-          created.push(updatedUser)
-          payload.logger.info(`✅ Created user: ${userData.name} (${userData.role})`)
-        } else {
-          payload.logger.warn(
-            `⚠️  User created in Better Auth but not found in Payload: ${userData.email}`,
-          )
-        }
-      } else {
-        created.push(existing.docs[0] as User)
-        payload.logger.info(`ℹ️ User exists: ${userData.email}`)
+      if (payloadUserBeforeSeed) {
+        existing.push(userData.email)
       }
     } catch (error) {
-      payload.logger.error(
-        `L Error creating user ${userData.email}: ${error instanceof Error ? error.message : String(error)}`,
-      )
+      const message = error instanceof Error ? error.message : String(error)
+
+      if (isExistingUserError(message)) {
+        payload.logger.info(`ℹ️ Better Auth user exists: ${userData.email}`)
+        continue
+      }
+
+      failed.push(userData.email)
+      payload.logger.error(`❌ Error seeding user ${userData.email}: ${message}`)
     }
   }
 
-  return created
+  return {
+    created,
+    existing,
+    failed,
+  }
 }

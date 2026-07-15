@@ -10,9 +10,10 @@ jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URI: mongodb://localhost:27017/test
+      USE_SQLITE: true
+      PAYLOAD_SECRET: dummysecretforcibuildsonly1234567890
       NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3000
-      BETTER_AUTH_SECRET: dummy-secret
+      BETTER_AUTH_SECRET: dummysecretforcibuildsonly1234567890ab
       GOOGLE_CLIENT_ID: dummy
       GOOGLE_CLIENT_SECRET: dummy
 
@@ -23,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4

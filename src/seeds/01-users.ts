@@ -23,7 +23,10 @@ async function findPayloadUserByEmail(payload: Payload, email: string): Promise<
   return result.docs[0] ?? null
 }
 
-async function createOrUpdatePayloadUser(payload: Payload, userData: UserSeed): Promise<User> {
+async function createOrUpdatePayloadUser(
+  payload: Payload,
+  userData: UserSeed,
+): Promise<{ user: User; alreadyExisted: boolean }> {
   const existingUser = await findPayloadUserByEmail(payload, userData.email)
 
   if (!existingUser) {
@@ -37,14 +40,14 @@ async function createOrUpdatePayloadUser(payload: Payload, userData: UserSeed): 
     })
 
     payload.logger.info(`✅ Created Payload user: ${userData.email}`)
-    return createdUser
+    return { user: createdUser, alreadyExisted: false }
   }
 
   const needsUpdate = existingUser.name !== userData.name || existingUser.role !== userData.role
 
   if (!needsUpdate) {
     payload.logger.info(`ℹ️ Payload user is up to date: ${userData.email}`)
-    return existingUser
+    return { user: existingUser, alreadyExisted: true }
   }
 
   const updatedUser = await payload.update({
@@ -57,11 +60,20 @@ async function createOrUpdatePayloadUser(payload: Payload, userData: UserSeed): 
   })
 
   payload.logger.info(`♻️ Updated Payload user: ${userData.email}`)
-  return updatedUser
+  return { user: updatedUser, alreadyExisted: true }
 }
 
 function isExistingUserError(message: string): boolean {
   return message.includes('User already exists')
+}
+
+function isMissingTableError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === '42P01'
+  )
 }
 
 async function createBetterAuthUser(payload: Payload, userData: UserSeed): Promise<void> {
@@ -100,14 +112,16 @@ export const seedUsers = async (payload: Payload): Promise<SeedUsersResult> => {
 
   for (const userData of USER_SEED_DATA) {
     try {
-      const payloadUserBeforeSeed = await findPayloadUserByEmail(payload, userData.email)
-      const payloadUser = await createOrUpdatePayloadUser(payload, userData)
+      const { user: payloadUser, alreadyExisted } = await createOrUpdatePayloadUser(
+        payload,
+        userData,
+      )
 
       await createBetterAuthUser(payload, userData)
 
       created.push(payloadUser)
 
-      if (payloadUserBeforeSeed) {
+      if (alreadyExisted) {
         existing.push(userData.email)
       }
     } catch (error) {
@@ -116,6 +130,13 @@ export const seedUsers = async (payload: Payload): Promise<SeedUsersResult> => {
       if (isExistingUserError(message)) {
         payload.logger.info(`ℹ️ Better Auth user exists: ${userData.email}`)
         continue
+      }
+
+      if (isMissingTableError(error)) {
+        payload.logger.warn(
+          `⚠️ Better Auth tables not found. Run "pnpm auth:migrate" to create them.`,
+        )
+        break
       }
 
       failed.push(userData.email)

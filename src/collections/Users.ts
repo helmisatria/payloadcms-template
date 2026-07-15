@@ -153,14 +153,10 @@ export const Users: CollectionConfig = {
             }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
-            const isDuplicateKeyError =
-              error instanceof Error && 'code' in error && error.code === 11000
-
             payload.logger.error?.({
               msg: 'Better Auth strategy failed to synchronize Payload user',
               email: betterAuthUser.email,
               error: errorMessage,
-              type: isDuplicateKeyError ? 'duplicate_user' : 'sync_error',
             })
 
             return {
@@ -192,7 +188,6 @@ export const Users: CollectionConfig = {
     {
       name: 'betterAuthUserId',
       type: 'text',
-      // required: true,
       unique: true,
       admin: {
         readOnly: true,
@@ -208,9 +203,6 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: 'image',

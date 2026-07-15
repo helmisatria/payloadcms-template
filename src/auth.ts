@@ -1,7 +1,6 @@
 import { APIError, betterAuth } from 'better-auth'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { admin } from 'better-auth/plugins/admin'
 import { payloadUserExists } from './auth/payload-user-access'
 import { BA_TABLES } from './db/better-auth-tables'
 import { postgresPool } from './db/postgres'
@@ -47,7 +46,6 @@ export const auth = betterAuth({
       strategy: 'compact', // Use compact encoding for smallest cookie size
     },
   },
-  plugins: [admin()],
   databaseHooks: {
     user: {
       create: {

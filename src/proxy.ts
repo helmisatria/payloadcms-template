@@ -2,7 +2,7 @@ import { getSessionCookie } from 'better-auth/cookies'
 import { NextRequest, NextResponse } from 'next/server'
 
 const SIGN_IN_PATH = '/auth/sign-in'
-const PROTECTED_SEGMENTS = ['/admin', '/account', '/organization'] as const
+const PROTECTED_SEGMENTS = ['/admin', '/account'] as const
 const AUTH_SEGMENTS = ['/auth', '/api/auth'] as const
 
 const shouldProtectPathname = (pathname: string) =>
@@ -90,5 +90,5 @@ const proxy = (req: NextRequest): Response | void => {
 export default proxy
 
 export const config = {
-  matcher: ['/admin/:path*', '/account/:path*', '/organization/:path*', '/api/auth/error'],
+  matcher: ['/admin/:path*', '/account/:path*', '/api/auth/error'],
 }

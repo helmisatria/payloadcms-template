@@ -12,7 +12,7 @@ A starter template combining [Payload CMS](https://payloadcms.com), [PostgreSQL]
 - **Session management** -- 7-day sessions with daily refresh and cookie caching
 - **Account linking** -- link multiple auth providers to a single user
 - **Restricted registration** -- only pre-existing Payload users can register via Better Auth
-- **Middleware protection** -- route-level auth guards for `/admin`, `/account`, and `/organization`
+- **Middleware protection** -- route-level auth guards for `/admin` and `/account`
 - **Next.js 16** -- App Router with Turbopack
 
 ## Quick Start

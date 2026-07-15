@@ -1,6 +1,6 @@
 # Domain Context
 
-This project uses Better Auth for identity and Payload for application authorization. The two role systems are deliberately separate: Better Auth's `ba_user.role` supports its admin plugin, while `users.role` points to the Payload role described below.
+This project uses Better Auth for identity and Payload for application authorization. Roles live only in Payload: `users.role` points to the role described below. The `ba_user.role`, ban, and impersonation columns are leftovers from Better Auth's admin plugin, which is no longer enabled; nothing reads them.
 
 ## Glossary
 

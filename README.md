@@ -7,11 +7,12 @@ A starter template combining [Payload CMS](https://payloadcms.com), [PostgreSQL]
 - **Payload CMS** -- headless CMS with admin panel, rich text editing, and media management
 - **PostgreSQL** -- production-ready relational database via `@payloadcms/db-postgres`
 - **Better Auth** -- authentication layer with email/password and social login (Google)
-- **RBAC** -- role-based access control with Admin, Content Admin, and Viewer roles
+- **Custom-role RBAC** -- admin-managed roles with per-collection create and scoped read/update/delete permissions (none/own/all today; collections can declare extra scopes such as team-based access)
+- **Audit logs** -- authenticated and system operation tracking through `payload-auditor`
 - **Session management** -- 7-day sessions with daily refresh and cookie caching
 - **Account linking** -- link multiple auth providers to a single user
 - **Restricted registration** -- only pre-existing Payload users can register via Better Auth
-- **Middleware protection** -- route-level auth guards for `/admin`, `/account`, and `/organization`
+- **Middleware protection** -- route-level auth guards for `/admin` and `/account`
 - **Next.js 16** -- App Router with Turbopack
 
 ## Quick Start
@@ -61,11 +62,14 @@ A starter template combining [Payload CMS](https://payloadcms.com), [PostgreSQL]
 ```
 src/
   auth.ts              # Better Auth configuration (plugins, providers, hooks)
-  access.ts            # RBAC helper (hasRole)
+  access/              # Permission model, access helpers, and RBAC collection wrapper
   proxy.ts             # Middleware for route protection
   collections/
-    Users.ts           # User collection with Better Auth strategy + RBAC fields
-    Media.ts           # Upload-enabled media collection
+    Roles.ts           # Admin-managed roles and permission matrix field
+    Users.ts           # Better Auth strategy, role relationship, and safe self access
+    Media.ts           # Ownable upload collection
+  components/
+    RolePermissionsMatrix.tsx # Per-collection permission editor
   lib/
     auth-client.ts     # Better Auth React client
     utils.ts           # Shared utilities
@@ -77,9 +81,11 @@ src/
 ## Authentication Flow
 
 1. Better Auth handles sign-in/sign-up (email/password or Google OAuth)
-2. On session resolution, the custom Payload auth strategy syncs the Better Auth user to the Payload `users` collection
-3. Payload admin panel access is controlled by the `role` field on the user (RBAC)
-4. Registration is restricted -- users must be pre-created in Payload before they can sign up via Better Auth
+2. Better Auth only creates sessions for users who already exist in the Payload `users` collection
+3. On session resolution, the custom Payload auth strategy refreshes identity details on the existing Payload user
+4. The Payload user is loaded with its custom role and collection permissions
+5. Payload collection access is enforced by those permissions; Better Auth's own role stays separate
+6. Registration is restricted -- signing in never creates a missing Payload user
 
 ## Scripts
 

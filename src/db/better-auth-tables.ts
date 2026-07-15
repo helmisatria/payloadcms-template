@@ -64,6 +64,9 @@ const betterAuthRawTables: RawTable[] = [
         defaultNow: true,
         notNull: true,
       }),
+      // role, ban, and impersonation columns were created for Better Auth's
+      // admin plugin, which is no longer enabled. They stay in the schema so
+      // this file keeps matching the real tables; nothing reads them.
       role: {
         name: 'role',
         type: 'text',

@@ -1,14 +1,8 @@
-import { hasRole } from '@/access'
+import { withRBAC } from '@/access/withRBAC'
 import type { CollectionConfig } from 'payload'
 
-export const Media: CollectionConfig = {
+const MediaConfig: CollectionConfig = {
   slug: 'media',
-  access: {
-    read: ({ req }) =>
-      hasRole(req.user, 'viewer') ||
-      hasRole(req.user, 'content-admin') ||
-      hasRole(req.user, 'admin'),
-  },
   fields: [
     {
       name: 'alt',
@@ -18,3 +12,18 @@ export const Media: CollectionConfig = {
   ],
   upload: true,
 }
+
+/**
+ * To add a collection-specific guard later, compose it with the RBAC rule:
+ *
+ * const RBACMedia = withRBAC(MediaConfig, { ownable: true })
+ *
+ * export const Media = {
+ *   ...RBACMedia,
+ *   access: {
+ *     ...RBACMedia.access,
+ *     read: andAccess(readAccess('media'), mediaReadGuard),
+ *   },
+ * }
+ */
+export const Media = withRBAC(MediaConfig, { ownable: true })

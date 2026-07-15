@@ -1,26 +1,65 @@
-import { hasRole } from '@/access'
+import {
+  canAccessAdminPanel,
+  canSetUserRole,
+  ownerOr,
+  readAccess,
+  updateAccess,
+  type ScopeRules,
+} from '@/access'
+import { withRBAC } from '@/access/withRBAC'
 import { auth } from '@/auth'
 import type { User } from '@/payload-types'
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Payload } from 'payload'
 
 interface BetterAuthUser {
   email?: string | null
   id: string
-  name?: string | null
   image?: string | null
+  name?: string | null
 }
 
-export const Users: CollectionConfig = {
+const getDefaultRoleId = async (payload: Payload): Promise<number> => {
+  const defaultRoleSlug = process.env.DEFAULT_ROLE_SLUG || 'viewer'
+  const roles = await payload.find({
+    collection: 'roles',
+    depth: 0,
+    limit: 1,
+    where: {
+      slug: {
+        equals: defaultRoleSlug,
+      },
+    },
+  })
+
+  const role = roles.docs[0]
+  if (!role) {
+    throw new Error(
+      `Default role "${defaultRoleSlug}" does not exist. Run the database setup and seeds first.`,
+    )
+  }
+
+  return role.id
+}
+
+const UsersConfig: CollectionConfig = {
   slug: 'users',
   admin: {
     useAsTitle: 'email',
-    defaultColumns: ['email', 'name', 'updatedAt'],
+    defaultColumns: ['email', 'name', 'role', 'updatedAt'],
   },
-  access: {
-    read: ({ req }) => hasRole(req.user, 'admin'),
-    create: ({ req }) => hasRole(req.user, 'admin'),
-    update: ({ req }) => hasRole(req.user, 'admin'),
-    delete: ({ req }) => hasRole(req.user, 'admin'),
+  hooks: {
+    beforeValidate: [
+      async ({ data, operation, req }) => {
+        if (operation !== 'create' || data?.role) {
+          return data
+        }
+
+        return {
+          ...data,
+          role: await getDefaultRoleId(req.payload),
+        }
+      },
+    ],
   },
   auth: {
     disableLocalStrategy: true,
@@ -32,9 +71,7 @@ export const Users: CollectionConfig = {
           let sessionData: unknown
 
           try {
-            // Normalize headers to Headers instance
             const requestHeaders = headers instanceof Headers ? headers : new Headers()
-
             const betterAuthResult = await auth.api.getSession({
               headers: requestHeaders,
               returnHeaders: Boolean(canSetHeaders),
@@ -66,38 +103,28 @@ export const Users: CollectionConfig = {
               type: isAuthError ? 'auth_failure' : 'network_error',
             })
 
-            return {
-              responseHeaders,
-              user: null,
-            }
+            return { responseHeaders, user: null }
           }
 
-          const session = sessionData as null | {
-            user?: BetterAuthUser
-          }
+          const session = sessionData as null | { user?: BetterAuthUser }
 
           if (!session?.user) {
-            return {
-              responseHeaders,
-              user: null,
-            }
+            return { responseHeaders, user: null }
           }
 
           const betterAuthUser = session.user
 
           if (!betterAuthUser.email) {
             payload.logger.warn?.('Better Auth session is missing an email address.')
-            return {
-              responseHeaders,
-              user: null,
-            }
+            return { responseHeaders, user: null }
           }
 
           let payloadUser: User | null = null
+
           try {
             const { docs } = await payload.find({
               collection: 'users',
-              depth: 0,
+              depth: 1,
               limit: 1,
               where: {
                 email: {
@@ -107,6 +134,16 @@ export const Users: CollectionConfig = {
             })
 
             payloadUser = docs[0]
+
+            if (!payloadUser) {
+              payload.logger.warn?.({
+                msg: 'Better Auth user does not have a matching Payload user',
+                email: betterAuthUser.email,
+              })
+
+              return { responseHeaders, user: null }
+            }
+
             const baseUserData: Pick<User, 'betterAuthUserId' | 'email' | 'name' | 'image'> = {
               betterAuthUserId: betterAuthUser.id,
               email: betterAuthUser.email,
@@ -114,42 +151,33 @@ export const Users: CollectionConfig = {
               image: betterAuthUser.image,
             }
 
-            if (!payloadUser) {
-              payloadUser = await payload.create({
+            const updates: Record<string, unknown> = {}
+
+            if (payloadUser.email !== baseUserData.email) {
+              updates.email = baseUserData.email
+            }
+
+            if (baseUserData.name && payloadUser.name !== baseUserData.name) {
+              updates.name = baseUserData.name
+            }
+
+            if (payloadUser.betterAuthUserId !== baseUserData.betterAuthUserId) {
+              updates.betterAuthUserId = baseUserData.betterAuthUserId
+            }
+
+            if (baseUserData.image && payloadUser.image !== baseUserData.image) {
+              updates.image = baseUserData.image
+            }
+
+            if (Object.keys(updates).length > 0) {
+              payloadUser = await payload.update({
                 collection: 'users',
-                data: baseUserData,
-                depth: 0,
+                data: updates,
+                depth: 1,
+                id: payloadUser.id,
               })
-              payload.logger.info?.(`Created Payload user for ${betterAuthUser.email}`)
-            } else {
-              const updates: Record<string, unknown> = {}
 
-              if (payloadUser.email !== baseUserData.email) {
-                updates.email = baseUserData.email
-              }
-
-              if (baseUserData.name && payloadUser.name !== baseUserData.name) {
-                updates.name = baseUserData.name
-              }
-
-              if (payloadUser.betterAuthUserId !== baseUserData.betterAuthUserId) {
-                updates.betterAuthUserId = baseUserData.betterAuthUserId
-              }
-
-              if (baseUserData.image && payloadUser.image !== baseUserData.image) {
-                updates.image = baseUserData.image
-              }
-
-              if (Object.keys(updates).length > 0) {
-                payloadUser = await payload.update({
-                  collection: 'users',
-                  data: updates,
-                  depth: 0,
-                  id: payloadUser.id,
-                })
-
-                payload.logger.info?.(`Updated Payload user for ${betterAuthUser.email}`)
-              }
+              payload.logger.info?.(`Updated Payload user for ${betterAuthUser.email}`)
             }
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error)
@@ -159,17 +187,11 @@ export const Users: CollectionConfig = {
               error: errorMessage,
             })
 
-            return {
-              responseHeaders,
-              user: null,
-            }
+            return { responseHeaders, user: null }
           }
 
           if (!payloadUser) {
-            return {
-              responseHeaders,
-              user: null,
-            }
+            return { responseHeaders, user: null }
           }
 
           return {
@@ -193,12 +215,19 @@ export const Users: CollectionConfig = {
         readOnly: true,
         hidden: true,
       },
+      access: {
+        create: () => false,
+        update: () => false,
+      },
     },
     {
       name: 'email',
       type: 'email',
       required: true,
       unique: true,
+      access: {
+        update: () => false,
+      },
     },
     {
       name: 'name',
@@ -209,30 +238,36 @@ export const Users: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'User profile image URL',
-        readOnly: true,
       },
     },
     {
       name: 'role',
-      type: 'select',
-      defaultValue: 'viewer',
-      options: [
-        {
-          label: 'Admin',
-          value: 'admin',
-        },
-        {
-          label: 'Content Admin',
-          value: 'content-admin',
-        },
-        {
-          label: 'Viewer',
-          value: 'viewer',
-        },
-      ],
+      type: 'relationship',
+      relationTo: 'roles',
+      required: true,
+      index: true,
+      access: {
+        create: ({ req }) => canSetUserRole({ req }),
+        update: canSetUserRole,
+      },
       admin: {
-        description: 'User role for access control',
+        description: 'One custom role controls this user’s collection permissions.',
       },
     },
   ],
+}
+
+// For users, ownership is the record itself: own scope matches the user's own document.
+const usersScopeRules: ScopeRules = { own: { field: 'id', userField: 'id' } }
+
+const RBACUsers = withRBAC(UsersConfig, { scopes: usersScopeRules })
+
+export const Users: CollectionConfig = {
+  ...RBACUsers,
+  access: {
+    ...RBACUsers.access,
+    admin: ({ req }) => canAccessAdminPanel({ req }),
+    read: ownerOr(readAccess('users', usersScopeRules)),
+    update: ownerOr(updateAccess('users', usersScopeRules)),
+  },
 }

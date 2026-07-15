@@ -1,5 +1,5 @@
 import type { Payload } from 'payload'
-import type { User } from '@/payload-types'
+import type { Role, User } from '@/payload-types'
 import { auth } from '@/auth'
 import { USER_SEED_DATA, type UserSeed } from './seed-data'
 
@@ -26,8 +26,14 @@ async function findPayloadUserByEmail(payload: Payload, email: string): Promise<
 async function createOrUpdatePayloadUser(
   payload: Payload,
   userData: UserSeed,
+  rolesBySlug: Map<string, Role>,
 ): Promise<{ user: User; alreadyExisted: boolean }> {
   const existingUser = await findPayloadUserByEmail(payload, userData.email)
+  const role = rolesBySlug.get(userData.roleSlug)
+
+  if (!role) {
+    throw new Error(`Missing seeded role: ${userData.roleSlug}`)
+  }
 
   if (!existingUser) {
     const createdUser = await payload.create({
@@ -35,7 +41,7 @@ async function createOrUpdatePayloadUser(
       data: {
         email: userData.email,
         name: userData.name,
-        role: userData.role,
+        role: role.id,
       },
     })
 
@@ -43,7 +49,9 @@ async function createOrUpdatePayloadUser(
     return { user: createdUser, alreadyExisted: false }
   }
 
-  const needsUpdate = existingUser.name !== userData.name || existingUser.role !== userData.role
+  const existingRoleId =
+    typeof existingUser.role === 'object' ? existingUser.role.id : existingUser.role
+  const needsUpdate = existingUser.name !== userData.name || existingRoleId !== role.id
 
   if (!needsUpdate) {
     payload.logger.info(`ℹ️ Payload user is up to date: ${userData.email}`)
@@ -55,7 +63,7 @@ async function createOrUpdatePayloadUser(
     id: existingUser.id,
     data: {
       name: userData.name,
-      role: userData.role,
+      role: role.id,
     },
   })
 
@@ -103,7 +111,10 @@ async function createBetterAuthUser(payload: Payload, userData: UserSeed): Promi
   payload.logger.info(`✅ Created Better Auth user: ${userData.email}`)
 }
 
-export const seedUsers = async (payload: Payload): Promise<SeedUsersResult> => {
+export const seedUsers = async (
+  payload: Payload,
+  rolesBySlug: Map<string, Role>,
+): Promise<SeedUsersResult> => {
   payload.logger.info('👤 Seeding users...')
 
   const created: User[] = []
@@ -115,6 +126,7 @@ export const seedUsers = async (payload: Payload): Promise<SeedUsersResult> => {
       const { user: payloadUser, alreadyExisted } = await createOrUpdatePayloadUser(
         payload,
         userData,
+        rolesBySlug,
       )
 
       await createBetterAuthUser(payload, userData)

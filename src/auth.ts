@@ -2,9 +2,16 @@ import { APIError, betterAuth } from 'better-auth'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { admin } from 'better-auth/plugins/admin'
+import { payloadUserExists } from './auth/payload-user-access'
 import { BA_TABLES } from './db/better-auth-tables'
 import { postgresPool } from './db/postgres'
 import { getIsSeedingUsers } from './seeds/state'
+
+const throwRestrictedAccess = (): never => {
+  throw new APIError('FORBIDDEN', {
+    message: 'Access is restricted.',
+  })
+}
 
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL!,
@@ -51,21 +58,32 @@ export const auth = betterAuth({
 
           const payload = await getPayload({ config })
 
-          const userExists = await payload.find({
-            collection: 'users',
-            limit: 1,
-            where: {
-              email: { equals: user.email },
-            },
-          })
-
-          if (!userExists.docs.length) {
+          if (!(await payloadUserExists(payload, user.email))) {
             throw new APIError('BAD_REQUEST', {
               message: 'Registration is restricted.',
             })
           }
 
           return { data: user }
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session, ctx) => {
+          if (!ctx) {
+            return throwRestrictedAccess()
+          }
+
+          const betterAuthUser = await ctx.context.internalAdapter.findUserById(session.userId)
+          if (!betterAuthUser?.email) {
+            return throwRestrictedAccess()
+          }
+
+          const payload = await getPayload({ config })
+          if (!(await payloadUserExists(payload, betterAuthUser.email))) {
+            throwRestrictedAccess()
+          }
         },
       },
     },

@@ -1,10 +1,10 @@
-export type UserRole = 'admin' | 'content-admin' | 'viewer'
+export type UserRoleSlug = 'super-admin' | 'content-admin' | 'viewer'
 
 export type UserSeed = {
   email: string
   password: string
   name: string
-  role: UserRole
+  roleSlug: UserRoleSlug
 }
 
 /**
@@ -18,18 +18,18 @@ export const USER_SEED_DATA: UserSeed[] = [
     email: 'admin@example.com',
     password: 'admin123',
     name: 'System Administrator',
-    role: 'admin',
+    roleSlug: 'super-admin',
   },
   {
     email: 'content@example.com',
     password: 'content123',
     name: 'Content Administrator',
-    role: 'content-admin',
+    roleSlug: 'content-admin',
   },
   {
     email: 'viewer@example.com',
     password: 'viewer123',
     name: 'Viewer User',
-    role: 'viewer',
+    roleSlug: 'viewer',
   },
 ]

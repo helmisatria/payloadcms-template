@@ -17,7 +17,7 @@ type RolePermissionsMatrixProps = {
   targets: PermissionTarget[]
 }
 
-const scopes: Scope[] = ['none', 'own', 'all']
+const scopesFor = (target: PermissionTarget): Scope[] => ['none', ...target.scopes, 'all']
 
 const emptyPermission = (collection: string): CollectionPermission => ({
   collection,
@@ -224,8 +224,8 @@ export const RolePermissionsMatrix = ({
                       }}
                     >
                       <div style={{ display: 'inline-flex', gap: 4 }}>
-                        {scopes.map((scope) => {
-                          const disabled = readOnly || (scope === 'own' && !target.ownable)
+                        {scopesFor(target).map((scope) => {
+                          const disabled = readOnly
                           const selected = permission[action] === scope
 
                           return (

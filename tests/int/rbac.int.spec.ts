@@ -14,10 +14,11 @@ import { getPayload, type Access, type CollectionConfig, type Payload } from 'pa
 import { beforeAll, describe, expect, it } from 'vitest'
 
 const targets: PermissionTarget[] = [
-  { slug: 'users', label: 'Users', ownable: true },
-  { slug: 'roles', label: 'Roles', ownable: false },
-  { slug: 'media', label: 'Media', ownable: true },
-  { slug: 'audit-logs', label: 'Audit Logs', ownable: false },
+  { slug: 'users', label: 'Users', scopes: ['own'] },
+  { slug: 'roles', label: 'Roles', scopes: [] },
+  { slug: 'articles', label: 'Articles', scopes: ['own', 'team'] },
+  { slug: 'media', label: 'Media', scopes: ['own'] },
+  { slug: 'audit-logs', label: 'Audit Logs', scopes: [] },
 ]
 
 const userWithRole = (id: number, slug: string, permissions: Role['permissions']): AccessUser => ({
@@ -132,8 +133,12 @@ describe('RBAC permission contract', () => {
     expect(checkPermission(editor, 'media', 'update')).toBe('own')
     expect(await runAccess(readAccess('media'), editor)).toBe(true)
 
-    const updateResult = await runAccess((await import('@/access')).updateAccess('media'), editor)
-    expect(updateResult).toEqual({ createdBy: { equals: 7 } })
+    const ownRule = { own: { field: 'createdBy', userField: 'id' } }
+    const updateResult = await runAccess(
+      (await import('@/access')).updateAccess('media', ownRule),
+      editor,
+    )
+    expect(updateResult).toEqual({ createdBy: { in: [7] } })
   })
 
   it('always lets super-admin bypass an empty matrix', () => {

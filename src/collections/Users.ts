@@ -1,4 +1,11 @@
-import { canAccessAdminPanel, canSetUserRole, ownerOr, readAccess, updateAccess } from '@/access'
+import {
+  canAccessAdminPanel,
+  canSetUserRole,
+  ownerOr,
+  readAccess,
+  updateAccess,
+  type ScopeRules,
+} from '@/access'
 import { withRBAC } from '@/access/withRBAC'
 import { auth } from '@/auth'
 import type { User } from '@/payload-types'
@@ -250,14 +257,17 @@ const UsersConfig: CollectionConfig = {
   ],
 }
 
-const RBACUsers = withRBAC(UsersConfig)
+// For users, ownership is the record itself: own scope matches the user's own document.
+const usersScopeRules: ScopeRules = { own: { field: 'id', userField: 'id' } }
+
+const RBACUsers = withRBAC(UsersConfig, { scopes: usersScopeRules })
 
 export const Users: CollectionConfig = {
   ...RBACUsers,
   access: {
     ...RBACUsers.access,
     admin: ({ req }) => canAccessAdminPanel({ req }),
-    read: ownerOr(readAccess('users')),
-    update: ownerOr(updateAccess('users')),
+    read: ownerOr(readAccess('users', usersScopeRules)),
+    update: ownerOr(updateAccess('users', usersScopeRules)),
   },
 }

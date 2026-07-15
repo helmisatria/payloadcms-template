@@ -1,11 +1,37 @@
 import type { CollectionConfig } from 'payload'
 
 export const PERMISSION_ACTIONS = ['create', 'read', 'update', 'delete'] as const
-export const PERMISSION_SCOPES = ['none', 'own', 'all'] as const
+export const BASE_SCOPES = ['none', 'all'] as const
 
 export type PermissionAction = (typeof PERMISSION_ACTIONS)[number]
 export type ScopedPermissionAction = Exclude<PermissionAction, 'create'>
-export type Scope = (typeof PERMISSION_SCOPES)[number]
+
+/**
+ * A scope is the reach of one action: 'none' and 'all' always exist, and a
+ * collection can declare extra scopes such as 'own' or 'team' through withRBAC.
+ */
+export type Scope = string
+
+/**
+ * How a declared scope resolves to a query filter.
+ *
+ * `field` is the document field holding the owning relationship.
+ * `userField` is the request-user field holding the matching value(s);
+ * the special value 'id' means the user record itself.
+ *
+ * Planned extension (see ADR 0002, "condition scopes"): rules that match a
+ * document state instead of a membership, e.g. a 'published' scope declared
+ * as `{ where: { _status: { equals: 'published' } } }`. When needed, make
+ * this type a union of the membership rule and `{ where }`, return the
+ * constant filter from the access resolver, and skip the membership guard
+ * for condition scopes.
+ */
+export type ScopeRule = {
+  field: string
+  userField: string
+}
+
+export type ScopeRules = Record<string, ScopeRule>
 
 export type CollectionPermission = {
   collection: string
@@ -18,11 +44,11 @@ export type CollectionPermission = {
 export type PermissionTarget = {
   slug: string
   label: string
-  ownable: boolean
+  /** Extra scopes this collection supports beyond none/all, e.g. ['own', 'team']. */
+  scopes: string[]
 }
 
 const permissionKeys = new Set(['collection', ...PERMISSION_ACTIONS])
-const permissionScopes = new Set<string>(PERMISSION_SCOPES)
 
 const getCollectionLabel = (collection: CollectionConfig): string => {
   const pluralLabel = collection.labels?.plural
@@ -34,11 +60,21 @@ const getCollectionLabel = (collection: CollectionConfig): string => {
   return collection.slug
 }
 
+const getCollectionScopes = (collection: CollectionConfig): string[] => {
+  const scopes = collection.custom?.rbacScopes
+
+  if (!Array.isArray(scopes)) {
+    return []
+  }
+
+  return scopes.filter((scope): scope is string => typeof scope === 'string')
+}
+
 export const getPermissionTargets = (collections: CollectionConfig[]): PermissionTarget[] => {
   return collections.map((collection) => ({
     slug: collection.slug,
     label: getCollectionLabel(collection),
-    ownable: collection.slug === 'users' || collection.custom?.rbacOwnable === true,
+    scopes: getCollectionScopes(collection),
   }))
 }
 
@@ -82,15 +118,17 @@ export const validatePermissions = (value: unknown, targets: PermissionTarget[])
       return `Create permission for ${permission.collection} must be true or false.`
     }
 
+    const allowedScopes = [...BASE_SCOPES, ...target.scopes]
+
     for (const action of ['read', 'update', 'delete'] as const) {
       const scope = permission[action]
 
-      if (typeof scope !== 'string' || !permissionScopes.has(scope)) {
-        return `${action} permission for ${permission.collection} must be none, own, or all.`
+      if (typeof scope !== 'string' || scope.length === 0) {
+        return `${action} permission for ${permission.collection} must be one of: ${allowedScopes.join(', ')}.`
       }
 
-      if (scope === 'own' && !target.ownable) {
-        return `${permission.collection} does not support own-scoped permissions.`
+      if (scope !== 'none' && scope !== 'all' && !target.scopes.includes(scope)) {
+        return `${permission.collection} does not support ${scope}-scoped permissions.`
       }
     }
   }
@@ -107,10 +145,10 @@ export const isCollectionPermission = (value: unknown): value is CollectionPermi
     typeof value.collection === 'string' &&
     typeof value.create === 'boolean' &&
     typeof value.read === 'string' &&
-    permissionScopes.has(value.read) &&
+    value.read.length > 0 &&
     typeof value.update === 'string' &&
-    permissionScopes.has(value.update) &&
+    value.update.length > 0 &&
     typeof value.delete === 'string' &&
-    permissionScopes.has(value.delete)
+    value.delete.length > 0
   )
 }

@@ -9,8 +9,22 @@ on:
 jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: payload_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d payload_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
-      USE_SQLITE: true
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/payload_test
       PAYLOAD_SECRET: dummysecretforcibuildsonly1234567890
       NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3000
       BETTER_AUTH_SECRET: dummysecretforcibuildsonly1234567890ab
@@ -41,7 +55,13 @@ jobs:
         run: pnpm run lint
 
       - name: Run typecheck
-        run: npx tsc --noEmit
+        run: pnpm run typecheck
+
+      - name: Run database migrations
+        run: pnpm run db:migrate
+
+      - name: Run integration tests
+        run: pnpm run test:int
 
       - name: Run build
         run: pnpm run build

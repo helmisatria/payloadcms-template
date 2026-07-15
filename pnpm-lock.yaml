@@ -98,9 +98,6 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2
     devDependencies:
-      '@payloadcms/db-sqlite':
-        specifier: ^3.86.0
-        version: 3.86.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(payload@3.86.0(graphql@16.14.2)(typescript@6.0.3))(pg@8.22.0)
       '@playwright/test':
         specifier: 1.61.1
         version: 1.61.1
@@ -1929,11 +1926,6 @@ packages:
 
   '@payloadcms/db-postgres@3.86.0':
     resolution: {integrity: sha512-AC0yI/QGzOmejHcI5YTUnW0QO+p4PrHONYG5eQnoskRoYnfR0JUBfz+GUaSHYocPVs02fRVAesNkF9YCVfahXQ==}
-    peerDependencies:
-      payload: 3.86.0
-
-  '@payloadcms/db-sqlite@3.86.0':
-    resolution: {integrity: sha512-eNrqAKd1+FPOnG9plMtJbf0jTWphUrryrGEFPU2TmvA7PcfGtQRSBXCX30YYbSoztORl9vtx8dr03IPch5NT0w==}
     peerDependencies:
       payload: 3.86.0
 
@@ -7455,95 +7447,11 @@ snapshots:
       - sqlite3
       - supports-color
 
-  '@payloadcms/db-sqlite@3.86.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(payload@3.86.0(graphql@16.14.2)(typescript@6.0.3))(pg@8.22.0)':
-    dependencies:
-      '@libsql/client': 0.14.0
-      '@payloadcms/drizzle': 3.86.0(@libsql/client@0.14.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(payload@3.86.0(graphql@16.14.2)(typescript@6.0.3))(pg@8.22.0)
-      console-table-printer: 2.12.1
-      drizzle-kit: 0.31.7
-      drizzle-orm: 0.45.2(@libsql/client@0.14.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(pg@8.22.0)
-      payload: 3.86.0(graphql@16.14.2)(typescript@6.0.3)
-      prompts: 2.4.2
-      to-snake-case: 1.0.0
-      uuid: 13.0.2
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-
   '@payloadcms/drizzle@3.86.0(@libsql/client@0.14.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(payload@3.86.0(graphql@16.14.2)(typescript@6.0.3))(pg@8.20.0)':
     dependencies:
       console-table-printer: 2.12.1
       dequal: 2.0.3
       drizzle-orm: 0.45.2(@libsql/client@0.14.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(pg@8.20.0)
-      payload: 3.86.0(graphql@16.14.2)(typescript@6.0.3)
-      prompts: 2.4.2
-      to-snake-case: 1.0.0
-      uuid: 13.0.2
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-
-  '@payloadcms/drizzle@3.86.0(@libsql/client@0.14.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(payload@3.86.0(graphql@16.14.2)(typescript@6.0.3))(pg@8.22.0)':
-    dependencies:
-      console-table-printer: 2.12.1
-      dequal: 2.0.3
-      drizzle-orm: 0.45.2(@libsql/client@0.14.0)(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(kysely@0.29.3)(pg@8.22.0)
       payload: 3.86.0(graphql@16.14.2)(typescript@6.0.3)
       prompts: 2.4.2
       to-snake-case: 1.0.0

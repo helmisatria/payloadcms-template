@@ -3,7 +3,10 @@ import type { Access, PayloadRequest, Where } from 'payload'
 import {
   isCollectionPermission,
   type PermissionAction,
+  type Scope,
   type ScopedPermissionAction,
+  type ScopeRule,
+  type ScopeRules,
 } from './permissions'
 
 export { andAccess } from './andAccess'
@@ -42,12 +45,12 @@ export function checkPermission(
   user: AccessUser,
   collectionSlug: string,
   action: ScopedPermissionAction,
-): boolean | 'own'
+): boolean | Scope
 export function checkPermission(
   user: AccessUser,
   collectionSlug: string,
   action: PermissionAction,
-): boolean | 'own' {
+): boolean | Scope {
   const role = getPopulatedRole(user)
 
   if (!role) {
@@ -80,27 +83,62 @@ export function checkPermission(
     return true
   }
 
-  if (scope === 'own') {
-    return 'own'
+  if (scope === 'none') {
+    return false
   }
 
-  return false
+  return scope
 }
 
-const ownWhere = (collectionSlug: string, userId: number | string): Where => {
-  if (collectionSlug === 'users') {
-    return { id: { equals: userId } }
+/** Extracts ids from a relationship value: a single id, a document, or an array of either. */
+export const relationshipIds = (value: unknown): (number | string)[] => {
+  const items = Array.isArray(value) ? value : [value]
+
+  return items.flatMap((item) => {
+    if (typeof item === 'number' || typeof item === 'string') {
+      return [item]
+    }
+
+    if (item && typeof item === 'object' && 'id' in item) {
+      const id = (item as { id: unknown }).id
+      if (typeof id === 'number' || typeof id === 'string') {
+        return [id]
+      }
+    }
+
+    return []
+  })
+}
+
+/** The user-side values a scope rule matches against ('id' means the user record itself). */
+export const scopeUserIds = (user: AccessUser, userField: string): (number | string)[] => {
+  if (!user) {
+    return []
   }
 
-  return { createdBy: { equals: userId } }
+  if (userField === 'id') {
+    return [user.id]
+  }
+
+  return relationshipIds((user as Record<string, unknown>)[userField])
+}
+
+const scopeWhere = (rule: ScopeRule, user: AccessUser): Where | false => {
+  const ids = scopeUserIds(user, rule.userField)
+
+  if (ids.length === 0) {
+    return false
+  }
+
+  return { [rule.field]: { in: ids } }
 }
 
 const accessFor = (action: PermissionAction) => {
-  return (collectionSlug: string): Access => {
+  return (collectionSlug: string, scopeRules: ScopeRules = {}): Access => {
     return ({ req: { user } }) => {
       const permission = checkPermission(user, collectionSlug, action as ScopedPermissionAction)
 
-      if (permission !== 'own') {
+      if (typeof permission === 'boolean') {
         return permission
       }
 
@@ -108,7 +146,13 @@ const accessFor = (action: PermissionAction) => {
         return false
       }
 
-      return ownWhere(collectionSlug, user.id)
+      const rule = scopeRules[permission]
+
+      if (!rule) {
+        return false
+      }
+
+      return scopeWhere(rule, user)
     }
   }
 }
@@ -187,4 +231,11 @@ export const canSetUserRole = ({
   return checkPermission(req.user, 'users', 'update') === true
 }
 
-export type { CollectionPermission, PermissionAction, PermissionTarget, Scope } from './permissions'
+export type {
+  CollectionPermission,
+  PermissionAction,
+  PermissionTarget,
+  Scope,
+  ScopeRule,
+  ScopeRules,
+} from './permissions'

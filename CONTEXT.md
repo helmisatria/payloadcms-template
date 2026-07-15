@@ -16,9 +16,9 @@ One role row for one Payload collection:
 {
   collection: string
   create: boolean
-  read: 'none' | 'own' | 'all'
-  update: 'none' | 'own' | 'all'
-  delete: 'none' | 'own' | 'all'
+  read: Scope // 'none' | 'all' | a scope the collection declares, e.g. 'own' | 'team'
+  update: Scope
+  delete: Scope
 }
 ```
 
@@ -27,10 +27,14 @@ Missing rows grant nothing. Collection targets come from the configured Payload 
 ### Scope
 
 - `none`: deny the action.
-- `own`: restrict the action to documents owned by the current user.
 - `all`: allow the action across the collection.
+- Any other scope is declared by the collection through `withRBAC` and resolves to a query filter: the document's rule field must match the user's rule values. `own` (documents the user created; for `users`, the user's own record) is the only declared scope in use today. Group-based scopes such as `team` are supported by the machinery but not wired to any collection — see ADR 0002 for the worked example.
 
-Create is boolean because a document has no owner until it is created.
+Create is boolean because a document has no owner until it is created. Membership scopes still constrain create through the assignment guard below.
+
+### Membership guard
+
+For membership scopes (rules matching a user list, e.g. a future `teams` field), a `beforeValidate` hook rejects writes that assign the scope field to a group the user is not in, and the admin dropdown is filtered to the user's groups. Super-admin and holders of `update: all` on the collection may assign any group. System operations without a request user are unrestricted.
 
 ### Owner
 

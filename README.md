@@ -7,7 +7,7 @@ A starter template combining [Payload CMS](https://payloadcms.com), [PostgreSQL]
 - **Payload CMS** -- headless CMS with admin panel, rich text editing, and media management
 - **PostgreSQL** -- production-ready relational database via `@payloadcms/db-postgres`
 - **Better Auth** -- authentication layer with email/password and social login (Google)
-- **Custom-role RBAC** -- admin-managed roles with per-collection create and none/own/all permissions
+- **Custom-role RBAC** -- admin-managed roles with per-collection create and scoped read/update/delete permissions (none/own/all today; collections can declare extra scopes such as team-based access)
 - **Audit logs** -- authenticated and system operation tracking through `payload-auditor`
 - **Session management** -- 7-day sessions with daily refresh and cookie caching
 - **Account linking** -- link multiple auth providers to a single user
